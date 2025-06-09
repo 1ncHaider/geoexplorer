@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GeoExplorer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+</head>
+<body>
+    <h1>GeoExplorer</h1>
+    <div id="map" style="height: 600px;"></div>
+    <script>
+        var map = L.map('map').setView([20, 0], 2);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+        }).addTo(map);
+
+        fetch('/data?dataset=population')
+            .then(response => response.json())
+            .then(data => {
+                var markers = L.markerClusterGroup();
+                data.forEach(item => {
+                    var marker = L.marker([item.latitude, item.longitude])
+                        .bindPopup(item.region + ': ' + item.value);
+                    markers.addLayer(marker);
+                });
+                map.addLayer(markers);
+            });
+
+        fetch('/data?dataset=gdp')
+            .then(response => response.json())
+            .then(data => {
+                var heatData = data.map(item => [item.latitude, item.longitude, item.value]);
+                L.heatLayer(heatData, {radius: 25}).addTo(map);
+            });
+
+        fetch('/data?dataset=climate')
+            .then(response => response.json())
+            .then(data => {
+                var geojsonLayer = L.geoJson(data);
+                map.addLayer(geojsonLayer);
+            });
+    </script>
+</body>
+</html>
